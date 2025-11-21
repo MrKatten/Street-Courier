@@ -64,6 +64,7 @@ using System.Collections.Generic;
 using LogitechG29.Sample.Input;
 using UnityEngine;
 using TMPro;
+using System.Media;
 
 #endregion
 
@@ -76,6 +77,8 @@ public class CarControllerSample : MonoBehaviour
     [SerializeField] private float maxBrakeTorque = 500f;
     [SerializeField] private TMP_Text _speedText;
     [SerializeField] private TMP_Text _gearText;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private Boolean sound;
 
     [Header("Gear Settings")]
     [SerializeField] private float[] gearMaxSpeeds = { 20f, 40f, 60f, 80f, 100f, 120f, 15f }; // Максимальные скорости для каждой передачи (последняя - задняя)
@@ -142,6 +145,19 @@ public class CarControllerSample : MonoBehaviour
             {
                 motorInput = inputControllerReader.Throttle;
             }
+        }
+        if ((int)currentSpeed > 0)
+        {
+            if (sound)
+            {
+                audioSource.Play();
+                sound = false;
+            }
+        }
+        else if ((int)currentSpeed <= 0)
+        {
+            sound = true;
+            audioSource.Stop();
         }
         _speedText.text = Convert.ToString((int)currentSpeed) + " КМ/Ч";
         int gear = GetCurrentGear();
