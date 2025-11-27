@@ -1,62 +1,3 @@
-//#region
-
-//using System;
-//using System.Collections.Generic;
-//using LogitechG29.Sample.Input;
-//using UnityEngine;
-
-//#endregion
-
-//public class CarControllerSample : MonoBehaviour
-//{
-//    [SerializeField] private InputControllerReader inputControllerReader;
-//    [SerializeField] private List<AxleInfo> axleInfos; // информация о каждой отдельной оси
-
-//    [SerializeField]
-//    private float maxMotorTorque; // максимальный крутящий момент, который двигатель может приложить к колесу
-
-//    [SerializeField] private float maxSteeringAngle; // максимальный угол поворота, который может иметь колесо
-
-//    public void FixedUpdate()
-//    {
-//        var speed = 0f;
-//        if (inputControllerReader.Throttle != 0)
-//        {
-//            speed = inputControllerReader.Throttle;
-//        }
-//        else if (inputControllerReader.Brake != 0)
-//        {
-//            speed = -inputControllerReader.Brake;
-//        }
-
-//        var motor = maxMotorTorque * speed;
-//        var steering = maxSteeringAngle * inputControllerReader.Steering;
-
-//        foreach (var axleInfo in axleInfos)
-//        {
-//            if (axleInfo.steering)
-//            {
-//                axleInfo.leftWheel.steerAngle = steering;
-//                axleInfo.rightWheel.steerAngle = steering;
-//            }
-
-//            if (axleInfo.motor)
-//            {
-//                axleInfo.leftWheel.motorTorque = motor;
-//                axleInfo.rightWheel.motorTorque = motor;
-//            }
-//        }
-//    }
-
-//    [Serializable]
-//    public class AxleInfo
-//    {
-//        public WheelCollider leftWheel;
-//        public WheelCollider rightWheel;
-//        public bool motor; // это колесо прикреплено к мотору?
-//        public bool steering; // применяет ли это колесо угол поворота?
-//    }
-//}
 #region
 
 using System;
@@ -79,6 +20,13 @@ public class CarControllerSample : MonoBehaviour
     [SerializeField] private TMP_Text _gearText;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private Boolean sound;
+    [SerializeField] private float steeringspeed = 4f;
+    [SerializeField] private bool usespeedsensitivesteering = true;
+    [SerializeField] private float minsteeringangle = 15f;
+    [SerializeField] private float maxsteeringangleatspeed = 30f;
+    [SerializeField] private float speedforminsteering = 15f;
+    private float currentsteeringangle;
+    private float targetsteeringangle;
 
     [Header("Gear Settings")]
     [SerializeField] private float[] gearMaxSpeeds = { 20f, 40f, 60f, 80f, 100f, 120f, 15f }; // Максимальные скорости для каждой передачи (последняя - задняя)
@@ -97,6 +45,17 @@ public class CarControllerSample : MonoBehaviour
         ApplyForcesToWheels();
     }
 
+    private void CalculateSteeringAngle(float steeringInput, float currentSpeed)
+    {
+        targetsteeringangle = maxSteeringAngle * steeringInput;
+        if (usespeedsensitivesteering)
+        {
+            float speedFactor = Mathf.Clamp01(currentSpeed / speedforminsteering);
+            float currentMaxSteering = Mathf.Lerp(maxsteeringangleatspeed, minsteeringangle, speedFactor);
+            targetsteeringangle = Mathf.Clamp(targetsteeringangle, -currentMaxSteering, currentMaxSteering);
+        }
+        currentsteeringangle = Mathf.Lerp(currentsteeringangle, targetsteeringangle, steeringspeed * Time.fixedDeltaTime);
+    }
     private void HandleGearShift()
     {
         // Проверяем команды переключения передач
@@ -174,14 +133,15 @@ public class CarControllerSample : MonoBehaviour
         var brake = maxBrakeTorque * brakeInput;
 
         var motor = maxMotorTorque * motorInput;
-        var steering = maxSteeringAngle * inputControllerReader.Steering;
+        var steering = inputControllerReader.Steering;
+        CalculateSteeringAngle(steering, currentSpeed);
 
         foreach (var axleInfo in axleInfos)
         {
             if (axleInfo.steering)
             {
-                axleInfo.leftWheel.steerAngle = steering;
-                axleInfo.rightWheel.steerAngle = steering;
+                axleInfo.leftWheel.steerAngle = currentsteeringangle;
+                axleInfo.rightWheel.steerAngle = currentsteeringangle;
             }
 
             if (axleInfo.motor)

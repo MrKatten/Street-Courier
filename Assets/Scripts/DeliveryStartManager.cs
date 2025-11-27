@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
+using Bhaptics.SDK2;
 
 public class DeliveryStartManager : MonoBehaviour
 {
@@ -10,6 +12,8 @@ public class DeliveryStartManager : MonoBehaviour
     [SerializeField] public GameObject[] _people;
     [SerializeField] public ArrowToTarget _arrow;
     [SerializeField] public DeliveryEndManager _endManager;
+    [SerializeField] public TMP_Text _text;
+    [SerializeField] public int _count = 0;
 
     [Header("Transform")]
     [SerializeField] public Transform _deliveryPointStartTransform;
@@ -45,12 +49,15 @@ public class DeliveryStartManager : MonoBehaviour
     void Start()
     {
         _boxes.SetActive(false);
+
+        _text.text += "0/ 5";
     }
 
     public void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Car"))
         {
+            BhapticsLibrary.Play(eventId: "delivery");
             _deliveryPointStartTransform.position = new Vector3(_deliveryPointStartTransform.position.x, -3, _deliveryPointStartTransform.position.z);
             int randomRangeZone = Random.Range(0, points.Length);
             _deliveryPointEndTransform.position = points[randomRangeZone];

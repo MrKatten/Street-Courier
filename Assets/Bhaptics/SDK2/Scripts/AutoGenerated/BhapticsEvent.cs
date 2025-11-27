@@ -28,5 +28,7 @@ namespace Bhaptics.SDK2
         public const string CAR_HIT_LEFT = "car_hit_left";
         
         public const string CAR_HIT_RIGHT = "car_hit_right";
+        
+        public const string DELIVERY = "delivery";
     }
 }
